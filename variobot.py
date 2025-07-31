@@ -24,15 +24,36 @@ REQUEST_TIMEOUT = 30  # s
 MODULE_OPTIONS = [
     "Adresář",
     "Banka",
-    "Bilanční přehledy",
-    "CRM",
-    "Majetek",
+    "Datové schránky",
+    "Deník událostí",
+    "Dokumenty",
+    "eKomunikace",
+    "Elektronická evidence tržeb (EET)",
+    "Evidence majetku",
+    "Evidence smluv",
+    "GDPR",
+    "Hodnocení",
+    "Korespondence",
+    "Kursovní lístek,"
+    "Manager,"
     "Mzdy",
+    "Personální management",
+    "Pokladna",
+    "Prodejna",
     "Přijaté doklady",
+    "Půjčovna",
+    "Reklamace",
+    "Rozšíření skladů",
     "Servis",
-    "Skladové hospodářství",
-    "Výroba",
+    "Sklad",
+    "Účetnictví",
+    "Údržba",
+    "Úkoly",
     "Vydané doklady",
+    "Výroba",
+    "Zakázky",
+    "Zdroje",
+    "Změnové řízení"
 ]
 
 st.set_page_config(page_title=PAGE_TITLE, page_icon=PAGE_ICON, layout="centered")
