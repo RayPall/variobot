@@ -1,9 +1,8 @@
 # variobot.py
 """Streamlit app for Vario bot
 --------------------------------
-• Posílá název modulu do Make přes webhook.
-• Přijímá zpětný JSON string (?payload=) a hned zobrazí finální text.
-• Umožní stáhnout vygenerovaný obsah jako DOCX.
+• Dropdown se seznamem modulů → odešle název vybraného modulu do Make.
+• Automaticky přijímá text přes ?payload= a zobrazí ho + DOCX download.
 """
 
 import io
@@ -20,7 +19,21 @@ from docx import Document
 WEBHOOK_URL = "https://hook.eu2.make.com/6dobqwk57qdm23w6p09pgvnmrrl9qp72"
 PAGE_TITLE = "Vario Bot – Landing-page generátor"
 PAGE_ICON = "📝"
-REQUEST_TIMEOUT = 30  # sekund – vyšší timeout pro pomalejší odezvy Make
+REQUEST_TIMEOUT = 30  # s
+
+MODULE_OPTIONS = [
+    "Adresář",
+    "Banka",
+    "Bilanční přehledy",
+    "CRM",
+    "Majetek",
+    "Mzdy",
+    "Přijaté doklady",
+    "Servis",
+    "Skladové hospodářství",
+    "Výroba",
+    "Vydané doklady",
+]
 
 st.set_page_config(page_title=PAGE_TITLE, page_icon=PAGE_ICON, layout="centered")
 st.title("📝 Generátor (a příjemce) popisků modulů ERP Vario")
@@ -28,7 +41,6 @@ st.title("📝 Generátor (a příjemce) popisků modulů ERP Vario")
 # ============== Pomocné funkce ==============
 
 def extract_text(payload_raw: str) -> Optional[str]:
-    """Rozbalí %xx sekvence, parse JSON a vrátí hodnotu `result` nebo `text`."""
     try:
         decoded = urllib.parse.unquote_plus(payload_raw)
         data: Dict[str, Any] = json.loads(decoded)
@@ -38,14 +50,13 @@ def extract_text(payload_raw: str) -> Optional[str]:
 
 
 def build_docx(data: Dict[str, Any]) -> bytes:
-    """Vytvoří DOCX v paměti a vrátí ho jako byty."""
     doc = Document()
     title = data.get("module", "Vario modul")
     doc.add_heading(title, level=1)
 
-    # Pokud klíč "Text" existuje, použij ho jako jediný blok.
-    if "Text" in data and isinstance(data["Text"], str):
-        doc.add_paragraph(data["Text"])
+    text_block = data.get("Text") or data.get("result")
+    if text_block:
+        doc.add_paragraph(str(text_block))
     else:
         for key, val in data.items():
             if key == "module":
@@ -59,32 +70,27 @@ def build_docx(data: Dict[str, Any]) -> bytes:
     return buffer.getvalue()
 
 
-# ============== 1) Formulář pro odeslání názvu modulu ==============
+# ============== 1) Formulář – dropdown ==============
 
-st.header("🔸 Odeslat název modulu do Make")
+st.header("🔸 Vyber modul a odešli do Make")
 with st.form(key="mod_form", clear_on_submit=True):
-    module_name = st.text_input("Název modulu", placeholder="Např. Skladové hospodářství")
+    module_name = st.selectbox("Modul", MODULE_OPTIONS, index=0)
     submitted = st.form_submit_button("Odeslat")
 
 if submitted:
-    if not module_name.strip():
-        st.warning("Prosím, vyplňte název modulu.")
-        st.stop()
-
-    payload_out = {"module_name": module_name.strip()}
+    payload_out = {"module_name": module_name}
     try:
         resp = requests.post(WEBHOOK_URL, json=payload_out, timeout=REQUEST_TIMEOUT)
         resp.raise_for_status()
     except requests.exceptions.RequestException as exc:
         st.error(f"❌ Nepodařilo se odeslat: {exc}")
     else:
-        st.success("✅ Název modulu byl úspěšně odeslán do Make.")
+        st.success("✅ Název modulu byl odeslán do Make.")
         st.json(payload_out)
 
 # ============== 2) Automatický příjem & zobrazení textu ==============
 
-query_params = st.query_params  # Mapping[str, str | list]
-raw_payload = query_params.get("payload")
+raw_payload = st.query_params.get("payload")
 if isinstance(raw_payload, list):
     raw_payload = raw_payload[0]
 
@@ -92,30 +98,27 @@ final_text = extract_text(raw_payload) if raw_payload else None
 
 if final_text:
     st.divider()
-    st.success("✅ Text úspěšně přijat z Make webhooku")
-
+    st.success("✅ Text přijat z Make webhooku")
     st.subheader("📄 Výstupní text")
     st.markdown(final_text, unsafe_allow_html=True)
 
     docx_bytes = build_docx({"module": "Výstup z Make", "Text": final_text})
     st.download_button(
-        label="💾 Stáhnout DOCX",
-        data=docx_bytes,
+        "💾 Stáhnout DOCX",
+        docx_bytes,
         file_name="landing_page.docx",
         mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
     )
-
     st.stop()
 
-# ============== 3) Manuální JSON fallback ==============
+# ============== 3) Ruční JSON fallback ==============
 
 st.divider()
-st.header("🔸 Ruční kontrola / JSON fallback")
+st.header("🔸 Ruční JSON fallback")
 json_input = st.text_area(
     "Vlož JSON, nebo přidej do URL ?payload= …:",
     value="",
     height=160,
-    placeholder='{"result": "Text landing-page …"}'
 )
 
 if st.button("Zobraz JSON"):
