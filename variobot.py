@@ -20,6 +20,7 @@ from docx import Document
 WEBHOOK_URL = "https://hook.eu2.make.com/6dobqwk57qdm23w6p09pgvnmrrl9qp72"
 PAGE_TITLE = "Vario Bot – Landing-page generátor"
 PAGE_ICON = "📝"
+REQUEST_TIMEOUT = 30  # sekund – vyšší timeout pro pomalejší odezvy Make
 
 st.set_page_config(page_title=PAGE_TITLE, page_icon=PAGE_ICON, layout="centered")
 st.title("📝 Generátor (a příjemce) popisků modulů ERP Vario")
@@ -72,7 +73,7 @@ if submitted:
 
     payload_out = {"module_name": module_name.strip()}
     try:
-        resp = requests.post(WEBHOOK_URL, json=payload_out, timeout=10)
+        resp = requests.post(WEBHOOK_URL, json=payload_out, timeout=REQUEST_TIMEOUT)
         resp.raise_for_status()
     except requests.exceptions.RequestException as exc:
         st.error(f"❌ Nepodařilo se odeslat: {exc}")
@@ -82,11 +83,8 @@ if submitted:
 
 # ============== 2) Automatický příjem & zobrazení textu ==============
 
-# Nové API: st.query_params (streamlit ≥1.24)
-query_params = st.query_params  # typ: Mapping[str, str|list]
+query_params = st.query_params  # Mapping[str, str | list]
 raw_payload = query_params.get("payload")
-
-# Pokud hodnota je list (více stejných klíčů), vezmeme první.
 if isinstance(raw_payload, list):
     raw_payload = raw_payload[0]
 
@@ -109,7 +107,7 @@ if final_text:
 
     st.stop()
 
-# ============== 3) Manuální JSON fallback (volitelné) ==============
+# ============== 3) Manuální JSON fallback ==============
 
 st.divider()
 st.header("🔸 Ruční kontrola / JSON fallback")
