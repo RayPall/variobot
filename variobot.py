@@ -83,7 +83,7 @@ if submitted:
 # ============== 2) Automatický příjem & zobrazení textu ==============
 
 # Query param payload
-query_params = st.query_params()
+query_params = st.experimental_get_query_params()
 qp_payload = query_params.get("payload", [None])[0]
 
 final_text = extract_text(qp_payload) if qp_payload else None
