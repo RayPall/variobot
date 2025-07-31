@@ -18,11 +18,11 @@ from docx import Document
 # ==============  Nastavení  ==============
 
 WEBHOOK_URL = "https://hook.eu2.make.com/6dobqwk57qdm23w6p09pgvnmrrl9qp72"
-PAGE_TITLE = "Vario Bot – Landing‑page generátor"
+PAGE_TITLE = "Vario Bot – Landing-page generátor"
 PAGE_ICON = "📝"
 
 st.set_page_config(page_title=PAGE_TITLE, page_icon=PAGE_ICON, layout="centered")
-st.title("📝 Generátor (a příjemce) popisků modulů ERP Vario")
+st.title("📝 Generátor (a příjemce) popisků modulů ERP Vario")
 
 # ============== Pomocné funkce ==============
 
@@ -47,7 +47,7 @@ def build_docx(data: Dict[str, Any]) -> bytes:
         doc.add_paragraph(data["Text"])
     else:
         for key, val in data.items():
-            if key in ("module",):
+            if key == "module":
                 continue
             doc.add_heading(str(key), level=2)
             doc.add_paragraph(str(val))
@@ -82,22 +82,23 @@ if submitted:
 
 # ============== 2) Automatický příjem & zobrazení textu ==============
 
-# Query param payload
-query_params = st.experimental_get_query_params()
-qp_payload = query_params.get("payload", [None])[0]
+# Nové API: st.query_params (streamlit ≥1.24)
+query_params = st.query_params  # typ: Mapping[str, str|list]
+raw_payload = query_params.get("payload")
 
-final_text = extract_text(qp_payload) if qp_payload else None
+# Pokud hodnota je list (více stejných klíčů), vezmeme první.
+if isinstance(raw_payload, list):
+    raw_payload = raw_payload[0]
+
+final_text = extract_text(raw_payload) if raw_payload else None
 
 if final_text:
-    # Pokud jsme payload našli, zobrazíme a nabídneme DOCX.
     st.divider()
     st.success("✅ Text úspěšně přijat z Make webhooku")
 
-    # Nadpis a Markdown
     st.subheader("📄 Výstupní text")
     st.markdown(final_text, unsafe_allow_html=True)
 
-    # Soubor DOCX k downloadu
     docx_bytes = build_docx({"module": "Výstup z Make", "Text": final_text})
     st.download_button(
         label="💾 Stáhnout DOCX",
@@ -106,7 +107,6 @@ if final_text:
         mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
     )
 
-    # Už nemusíme zobrazovat nic dalšího.
     st.stop()
 
 # ============== 3) Manuální JSON fallback (volitelné) ==============
@@ -117,7 +117,7 @@ json_input = st.text_area(
     "Vlož JSON, nebo přidej do URL ?payload= …:",
     value="",
     height=160,
-    placeholder='{"result": "Text landing‑page …"}'
+    placeholder='{"result": "Text landing-page …"}'
 )
 
 if st.button("Zobraz JSON"):
