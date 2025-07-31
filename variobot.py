@@ -1,4 +1,4 @@
-# app.py
+# variobot.py
 import json
 import io
 import urllib.parse
