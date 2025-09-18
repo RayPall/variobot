@@ -34,8 +34,8 @@ MODULE_OPTIONS = [
     "GDPR",
     "Hodnocení",
     "Korespondence",
-    "Kursovní lístek,"
-    "Manager,"
+    "Kursovní lístek",
+    "Manager",
     "Mzdy",
     "Personální management",
     "Pokladna",
