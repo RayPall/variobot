@@ -16,7 +16,7 @@ from docx import Document
 
 # ==============  Nastavení  ==============
 
-WEBHOOK_URL = "https://hook.eu2.make.com/6dobqwk57qdm23w6p09pgvnmrrl9qp72"
+WEBHOOK_URL = "https://hook.eu2.make.com/rik7iyrmgau5cdn4ffo9y4jbsaduzknw"
 PAGE_TITLE = "Vario Bot – Landing-page generátor"
 PAGE_ICON = "📝"
 REQUEST_TIMEOUT = 30  # s
